@@ -38,17 +38,19 @@ type JWTCustomClaims struct {
 }
 
 type Client struct {
-	HttpClient *http.Client
-	BaseUrl    *url.URL
-	Token      string
+	HTTPClient  *http.Client
+	BaseUrl     *url.URL
+	Token       string
+	HTTPBackoff int
 }
 
 func NewClient(tok string, urlBase string) *Client {
 	baseURL, _ := url.Parse(urlBase)
 	return &Client{
-		HttpClient: &http.Client{},
-		BaseUrl:    baseURL,
-		Token:      tok,
+		HTTPClient:  &http.Client{},
+		BaseUrl:     baseURL,
+		Token:       tok,
+		HTTPBackoff: 0,
 	}
 }
 
@@ -78,7 +80,11 @@ func (c *Client) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 }
 
 func (c *Client) Do(req *http.Request, respStr interface{}) (*http.Response, error) {
-	resp, err := c.HttpClient.Do(req)
+	if c.HTTPBackoff != 0 {
+		time.Sleep(time.Duration(time.Duration(c.HTTPBackoff) * time.Second))
+		c.HTTPBackoff = 0
+	}
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		//fmt.Printf("box client.Do error: %s\n", err)
 		return nil, err
@@ -89,6 +95,7 @@ func (c *Client) Do(req *http.Request, respStr interface{}) (*http.Response, err
 		if resp.StatusCode == 429 {
 			retrySecs, _ := strconv.Atoi(resp.Header.Get("Retry-after"))
 			time.Sleep(time.Duration(retrySecs) * time.Second)
+			c.HTTPBackoff = retrySecs
 			return nil, fmt.Errorf("rate limited for %d seconds", retrySecs)
 		} else {
 			return nil, fmt.Errorf("http request failed, resp: %#v", resp)

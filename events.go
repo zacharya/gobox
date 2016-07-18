@@ -42,7 +42,7 @@ type EventsCollection struct {
 	Entries            []*Event `json:"entries"`
 }
 
-type EventChanEntry struct {
+type EventChanMessage struct {
 	Event *Event
 	Err   error
 }
@@ -70,7 +70,7 @@ func (e *EventService) getEvents(eventLimit string, streamPos string) (*EventsCo
 	return &respBoxEventsJSON, nil
 }
 
-func (e *EventService) streamEvents(eventLimit string, streamPos string, tunnel chan *EventChanEntry) {
+func (e *EventService) streamEvents(eventLimit string, streamPos string, tunnel chan *EventChanMessage) {
 	for {
 		if streamPos == "" {
 			close(tunnel)
@@ -78,28 +78,28 @@ func (e *EventService) streamEvents(eventLimit string, streamPos string, tunnel 
 		}
 		eventsCollection, err := e.getEvents(eventLimit, streamPos)
 		if err != nil {
-			ev := &EventChanEntry{
+			message := &EventChanMessage{
 				nil,
 				err,
 			}
-			tunnel <- ev
+			tunnel <- message
 			continue
 		}
 		for _, event := range eventsCollection.Entries {
-			ev := &EventChanEntry{
+			message := &EventChanMessage{
 				event,
 				nil,
 			}
-			tunnel <- ev
+			tunnel <- message
 		}
 		streamPos = eventsCollection.NextStreamPosition
 		time.Sleep(2 * time.Second)
 	}
 }
 
-func (e *EventService) Channel(eventLimit string, startTime string) chan *EventChanEntry {
+func (e *EventService) Channel(eventLimit string, startTime string) chan *EventChanMessage {
 	streamPos := e.getSeedStreamPos(startTime)
-	eventStream := make(chan *EventChanEntry)
+	eventStream := make(chan *EventChanMessage)
 	go e.streamEvents(eventLimit, streamPos, eventStream)
 	return eventStream
 }
