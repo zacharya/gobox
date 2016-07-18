@@ -3,6 +3,7 @@ package box
 import (
 	"fmt"
 	"net/http"
+	"time"
 )
 
 type EventService struct {
@@ -92,7 +93,7 @@ func (e *EventService) streamEvents(eventLimit string, streamPos string, tunnel 
 			tunnel <- ev
 		}
 		streamPos = eventsCollection.NextStreamPosition
-		//time.Sleep(2 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 }
 
