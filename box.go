@@ -8,8 +8,6 @@ import (
 	"net/url"
 	"strconv"
 	"time"
-
-	"github.com/dgrijalva/jwt-go"
 )
 
 type Config struct {
@@ -18,11 +16,10 @@ type Config struct {
 }
 
 type ClientConfig struct {
-	Token           string          `json:"token"`
-	UrlBase         string          `json:"url_base"`
-	ClientID        string          `json:"client_id"`
-	ClientSecret    string          `json:"client_secret"`
-	JWTCustomClaims JWTCustomClaims `json:"jwt_custom_claims"`
+	Token        string `json:"token"`
+	UrlBase      string `json:"url_base"`
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
 }
 
 type EventsConfig struct {
@@ -38,7 +35,6 @@ type JWTCustomClaims struct {
 	Jti     string `json:"jti"`
 	Exp     int64  `json:"exp"`
 	KeyID   string `json:"key_id"`
-	jwt.StandardClaims
 }
 
 type Client struct {
